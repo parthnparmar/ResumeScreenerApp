@@ -1,0 +1,28 @@
+// 5. Services/ResumeScoringService.cs
+using Microsoft.ML;
+using ResumeScreenerApp.Models;
+using ResumeScreenerApp.MLModel;
+
+namespace ResumeScreenerApp.Services
+{
+    public class ResumeScoringService
+    {
+        private readonly MLContext _mlContext;
+        private readonly PredictionEngine<ModelInput, ModelOutput> _predictionEngine;
+
+        public ResumeScoringService()
+        {
+            _mlContext = new MLContext();
+            var model = _mlContext.Model.Load("MLModel/ResumeScorer.mlmodel", out _);
+            _predictionEngine = _mlContext.Model.CreatePredictionEngine<ModelInput, ModelOutput>(model);
+        }
+
+        public ScoreResult Score(ResumeInput input)
+        {
+            var combined = input.ResumeText + " " + input.JobDescription;
+            var modelInput = new ModelInput { CombinedText = combined };
+            var result = _predictionEngine.Predict(modelInput);
+            return new ScoreResult { Score = result.Score };
+        }
+    }
+}
